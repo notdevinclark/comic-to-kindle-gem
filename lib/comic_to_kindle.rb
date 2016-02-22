@@ -1,5 +1,9 @@
 require "comic_to_kindle/version"
 
 module ComicToKindle
-  # Your code goes here...
+  class SaySomethingForNow
+    def speak
+      puts "This will do cool stuff soon.\n"
+    end
+  end
 end

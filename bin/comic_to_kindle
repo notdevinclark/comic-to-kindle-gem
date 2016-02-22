@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require 'comic_to_kindle'
+
+mouth = ComicToKindle::SaySomethingForNow.new  
+mouth.speak
