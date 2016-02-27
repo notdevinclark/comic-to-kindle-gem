@@ -4,6 +4,11 @@ require 'fileutils'
 require 'pry'
 
 class Resizer
+  class FileNotFound < StandardError; end
+  class IncorrectExtension < StandardError; end
+
+  EXTS = %w(.zip .rar .cbz .cbr)
+
   attr_reader :file
 
   def initialize file
@@ -12,26 +17,100 @@ class Resizer
 
   def resize
     if File.exists? file
-      FileUtils.cp(file, "/tmp/#{file}.bak")
+      if EXTS.include? File.extname(file)
+        FileUtils.cp(file, temp_file)
+        # FileUtils.rm(temp_file)
+      else
+        raise IncorrectExtension, "#{file} is not of the correct extension. (#{EXTS.join('|')})"
+      end
+    else
+      raise FileNotFound, "#{file} does not exist"
     end
+  end
+
+  def tmp_extension
+    case File.extname(file)
+    when '.cbr' then '.rar'
+    when '.cbz' then '.zip'
+    else File.extname(file)
+    end
+  end
+
+  private
+
+  def temp_file
+    "/tmp/#{file}#{tmp_extension}"
   end
 end
 
 describe Resizer do
-  let(:file) { 'Rakefile' }
+  let(:file) { 'comic' }
   subject(:resizer) { Resizer.new(file) }
-  it 'verify the file exists' do
-    expect(File).to receive(:exists?).with(file)
-    resizer.resize
+
+  before do
+    allow(FileUtils).to receive(:cp)
+    allow(FileUtils).to receive(:rm)
   end
 
-  it 'verifies it copies the file to /tmp directory' do
-    expect(FileUtils).to receive(:cp).with(file, "/tmp/#{file}.bak")
-    resizer.resize
+  describe '#tmp_extension' do
+    context 'when extension is .zip' do
+      let(:file) { 'comic.zip' }
+      it 'returns .zip' do
+        expect(resizer.tmp_extension).to eq '.zip'
+      end
+    end
+    context 'when extension is .rar' do
+      let(:file) { 'comic.rar' }
+      it 'returns .rar' do
+        expect(resizer.tmp_extension).to eq '.rar'
+      end
+    end
+    context 'when extension is .cbr' do
+      let(:file) { 'comic.cbr' }
+      it 'returns .cbr' do
+        expect(resizer.tmp_extension).to eq '.rar'
+      end
+    end
+    context 'when extension is .cbz' do
+      let(:file) { 'comic.cbz' }
+      it 'returns .zip' do
+        expect(resizer.tmp_extension).to eq '.zip'
+      end
+    end
   end
 
-  it 'verifies that the file was moved to /tmp directory' do
-    resizer.resize
-    expect(File.exists? "/tmp/#{file}.bak").to be_truthy
+  context "when the file exists" do
+    before do
+      allow(File).to receive(:exists?) { true }
+    end
+
+    context 'when file has correct extension' do
+      let(:file) { 'comic.cbr' }
+      it 'copies the file to /tmp directory with the correct extension' do
+        expect(FileUtils).to receive(:cp).with(file, "/tmp/#{file}.rar")
+        resizer.resize
+      end
+    end
+
+    context 'when file does not have correct extension' do
+      it 'raises an error' do
+        expect { resizer.resize }.to raise_error Resizer::IncorrectExtension
+      end
+    end
   end
+
+  context "when the file doesn't exist" do
+    before do
+      allow(File).to receive(:exists?) { false }
+    end
+
+    it 'raises an error' do
+      expect { resizer.resize }.to raise_error(Resizer::FileNotFound)
+    end
+  end
+
+  # it 'verifies it deletes the file that was moved to the /tmp directory' do
+  #   expect(FileUtils).to receive(:rm).with("/tmp/#{file}.bak")
+  #   resizer.resize
+  # end
 end
