@@ -19,7 +19,6 @@ class Resizer
     if File.exists? file
       if EXTS.include? File.extname(file)
         FileUtils.cp(file, temp_file)
-        # FileUtils.rm(temp_file)
       else
         raise IncorrectExtension, "#{file} is not of the correct extension. (#{EXTS.join('|')})"
       end
@@ -108,9 +107,4 @@ describe Resizer do
       expect { resizer.resize }.to raise_error(Resizer::FileNotFound)
     end
   end
-
-  # it 'verifies it deletes the file that was moved to the /tmp directory' do
-  #   expect(FileUtils).to receive(:rm).with("/tmp/#{file}.bak")
-  #   resizer.resize
-  # end
 end
