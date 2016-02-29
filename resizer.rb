@@ -44,6 +44,25 @@ class Resizer
   end
 end
 
+class ZipHandler
+  attr_reader :archive
+
+  def initialize archive
+    @archive = archive
+  end
+
+  def unzip
+    FileUtils.mkdir("#{File.dirname(archive)}/#{File.basename(archive, '.*')}")
+  end
+end
+
+describe ZipHandler do
+  it 'upzips a file into a directory' do
+    ZipHandler.new('/tmp/comic.zip').unzip
+    expect(Dir.exists? '/tmp/comic').to be_truthy
+  end
+end
+
 describe Resizer do
   let(:file) { 'comic' }
   subject(:resizer) { Resizer.new(file) }
