@@ -38,7 +38,7 @@ class Resizer
   private
 
   def temp_file
-    "/tmp/#{file}#{tmp_extension}"
+    "/tmp/#{File.basename(file, ".*")}#{tmp_extension}"
   end
 end
 
@@ -86,7 +86,7 @@ describe Resizer do
     context 'when file has correct extension' do
       let(:file) { 'comic.cbr' }
       it 'copies the file to /tmp directory with the correct extension' do
-        expect(FileUtils).to receive(:cp).with(file, "/tmp/#{file}.rar")
+        expect(FileUtils).to receive(:cp).with(file, "/tmp/#{File.basename(file, ".*")}.rar")
         resizer.resize
       end
     end
