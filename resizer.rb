@@ -1,6 +1,8 @@
 require 'rspec'
 
 require 'fileutils'
+require 'zip'
+
 require 'pry'
 
 class Resizer
