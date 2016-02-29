@@ -53,6 +53,7 @@ class ZipHandler
 
   def unzip
     FileUtils.mkdir(unarchive_folder)
+    Zip::File.open(archive).each { |file| file.extract "#{unarchive_folder}/#{file.name}" }
   end
 
   private
@@ -65,8 +66,15 @@ end
 describe ZipHandler do
   let(:archive) { '/tmp/comic.zip' }
   let(:unarchive_folder) { "#{File.dirname(archive)}/#{File.basename(archive, '.*')}" }
+  let(:opened_archive) { double(:opened_archive) }
+  let(:archive_entry) { double(:archive_entry, name: 'archive_file_name') }
   subject(:zip_handler) { ZipHandler.new(archive) }
-  before { allow(FileUtils).to receive(:mkdir).with('/tmp/comic') }
+  before do
+    allow(FileUtils).to receive(:mkdir).with('/tmp/comic')
+    allow(Zip::File).to receive(:open).with(archive).and_return opened_archive
+    allow(opened_archive).to receive(:each).and_yield archive_entry
+    allow(archive_entry).to receive(:extract)
+  end
 
   describe '#unzip' do
     it 'creates a new directory in the same path with the same name as the archive' do
@@ -75,6 +83,10 @@ describe ZipHandler do
     end
     it 'opens the file with Zip::File class' do
       expect(Zip::File).to receive(:open).with(archive)
+      zip_handler.unzip
+    end
+    it 'calls extract on the files in the zip' do
+      expect(archive_entry).to receive(:extract).with("#{unarchive_folder}/archive_file_name")
       zip_handler.unzip
     end
   end
